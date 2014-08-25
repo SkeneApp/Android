@@ -224,7 +224,6 @@ public class ServicesActivity extends FragmentActivity implements
     @Override
     public void onConnected(Bundle connectionHint) {
         Log.i(TAG, "GoogleApiClient connected");
-        // TODO: Start making API requests.
 
         Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
 
@@ -317,6 +316,10 @@ public class ServicesActivity extends FragmentActivity implements
         // When the given tab is selected, switch to the corresponding page in
         // the ViewPager.
         mViewPager.setCurrentItem(tab.getPosition());
+
+        if(tab.getPosition() == 1) {
+            mapFrag.updatePlaces();
+        }
     }
 
     @Override
@@ -325,11 +328,6 @@ public class ServicesActivity extends FragmentActivity implements
 
     @Override
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-    }
-
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-
     }
 
     /**

@@ -19,8 +19,10 @@ public class Skene implements Serializable {
     public double longitude;
     public String text;
     public long pubTime;
+    public long pubDelay;
     public long parent_id;
-    //private static int radius = 400;
+
+    public static final int radius = 500;
 
     public Skene(JSONObject object) {
         try {
@@ -30,17 +32,20 @@ public class Skene implements Serializable {
             this.text = object.getString("text");
             this.pubTime = object.getLong("pubTime");
             this.parent_id = object.getLong("parent_id");
+            this.pubDelay = object.getLong("pubDelay");
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public Skene(double latitude, double longitude, String text) {
+    public Skene(double latitude, double longitude, String text, long delay) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.text = text;
         //this.pubTime = new Date().getTime(); // Not implemented in API
-        this.pubTime = 0;
+        //this.pubTime = 0;
+        this.pubDelay = delay;
+        this.parent_id = 0;
     }
 
     public static ArrayList<Skene> fromJSON(JSONArray jsonObjects) {
@@ -58,7 +63,7 @@ public class Skene implements Serializable {
     }
 
     public String readableTime() {
-        Date date = new Date(this.pubTime);
+        Date date = new Date(this.pubTime*1000); // pubTime from the server is in seconds
         return DateFormat.getDateTimeInstance().format(date);
     }
 
@@ -70,6 +75,7 @@ public class Skene implements Serializable {
             skene.put("text", this.text);
             skene.put("pubTime", this.pubTime);
             skene.put("parent_id", this.parent_id);
+            skene.put("pubDelay", this.pubDelay);
         } catch(JSONException e) {
             e.printStackTrace();
         }

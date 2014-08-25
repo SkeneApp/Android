@@ -139,8 +139,6 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        public void onFragmentInteraction(Uri uri);
         public Boolean isOnline();
         public MapFragment getMapFragment();
     }
@@ -151,8 +149,18 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
      */
 
     public void loadSkenes(Location location) {
+        String count = "50";
+        String radius = Integer.toString(Skene.radius);
+
         if(mListener.isOnline()) {
-            String stringUrl = "http://whispr.outi.me/api/get_latest?json=true&count=25";
+            String stringUrl = "http://whispr.outi.me/api/get?count="
+                    + count
+                    + "&lat="
+                    + Double.toString(location.getLatitude())
+                    + "&long="
+                    + Double.toString(location.getLongitude())
+                    +"&radius="
+                    + radius;
 
             new DownloadUrlTask().execute(stringUrl);
         }
@@ -164,7 +172,8 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
         Toast.makeText(getActivity(), "Send message: " + message.getText().toString(), Toast.LENGTH_SHORT).show();
 
         if(location != null) {
-            skene = new Skene(location.getLatitude(), location.getLongitude(), message.getText().toString());
+            long delay = 0;
+            skene = new Skene(location.getLatitude(), location.getLongitude(), message.getText().toString(), delay);
             this.curSkene = skene;
             skeneJSON = skene.getJSON();
 
@@ -206,7 +215,7 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
                 JSONArray jsonArray = new JSONArray(result);
                 adapter.addAll(Skene.fromJSON(jsonArray));
 
-                mListener.getMapFragment().appendSkenes(getSkenes());
+                //mListener.getMapFragment().appendSkenes(getSkenes());
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -229,9 +238,14 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
         protected void onPostExecute(String result) {
             message.setText("");
             // Update messages
-            curSkene.id = Long.parseLong(result.trim(), 10);
+            try {
+                curSkene.id = Long.parseLong(result.trim(), 10);
+                adapter.insert(curSkene, 0);
+            } catch (Exception e) {
+                Toast.makeText(getActivity(), "Failed to send message", Toast.LENGTH_SHORT).show();
+            }
 
-            adapter.insert(curSkene, 0);
+
         }
     }
 }

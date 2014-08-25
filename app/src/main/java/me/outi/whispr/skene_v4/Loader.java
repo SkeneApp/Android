@@ -66,7 +66,7 @@ public class Loader {
     }
 
     public String postJSON(JSONObject json) {
-        String url = "http://whispr.outi.me/api/add_json";
+        String url = "http://whispr.outi.me/api/add";
 
         String resultString = "";
 

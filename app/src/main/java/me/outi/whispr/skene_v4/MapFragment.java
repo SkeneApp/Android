@@ -2,8 +2,10 @@ package me.outi.whispr.skene_v4;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,12 +18,23 @@ import android.widget.Toast;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.VisibleRegion;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by zaynetro on 10.8.2014.
@@ -52,6 +65,16 @@ public class MapFragment extends android.support.v4.app.Fragment {
      */
     private GoogleMap mMap;
     private SkenesAdapter adapter;
+
+    private Location selectedLoc;
+    private Circle curCircle;
+
+    private ArrayList<Circle> curCircles = new ArrayList<Circle>();
+
+    private ListView listView;
+
+    private long mTimePast;
+    private static final long timeInterval = 2000; // milliseconds
 
     /**
      * Use this factory method to create a new instance of
@@ -88,7 +111,7 @@ public class MapFragment extends android.support.v4.app.Fragment {
 
         View view = inflater.inflate(R.layout.map, container, false);
         setUpMapIfNeeded();
-        ListView listView = (ListView) view.findViewById(R.id.conversations);
+        listView = (ListView) view.findViewById(R.id.conversations);
         // Construct the data source
         ArrayList<Skene> arrayOfSkenes = new ArrayList<Skene>();
         // Create the adapter to convert the array to views
@@ -128,8 +151,7 @@ public class MapFragment extends android.support.v4.app.Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        public void onFragmentInteraction(Uri uri);
+        public Boolean isOnline();
         public Location getLocation();
     }
 
@@ -157,28 +179,86 @@ public class MapFragment extends android.support.v4.app.Fragment {
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
                 setUpMap(mListener.getLocation());
+
+                mMap.moveCamera(CameraUpdateFactory.zoomTo(14));
+
+                /**
+                 * When map is clicked set up new location circle
+                 */
+                mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+                    @Override
+                    public void onMapClick(LatLng latLng) {
+                        Location location = new Location("Map click");
+                        location.setLatitude(latLng.latitude);
+                        location.setLongitude(latLng.longitude);
+
+                        setUpMap(location);
+                        // TODO update feed
+                    }
+                });
+
+                /**
+                 * When map is moved load more map data
+                 */
+                mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
+                    @Override
+                    public void onCameraChange(CameraPosition position) {
+                        if(new Date().getTime() > (mTimePast + timeInterval)) {
+                            // If timeInterval past then update
+                            updatePlaces();
+                        }
+                    }
+                });
+
             }
         }
     }
 
-    /**
-     * This is where we can add markers or lines, add listeners or move the camera. In this case, we
-     * just add a marker near Africa.
-     * <p>
-     * This should only be called once and when we are sure that {@link #mMap} is not null.
-     */
+
     public void setUpMap(Location location) {
         if(location != null) {
             CircleOptions circle = new CircleOptions();
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             circle.center(latLng);
-            circle.radius(500);
-            circle.strokeColor(0xff00ff00);
-            circle.strokeWidth(2);
-            circle.fillColor(0xffff0000);
-            mMap.addCircle(circle);
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
+            circle.radius(Skene.radius);
+            circle.strokeColor(Color.argb(255, 52, 173, 125));
+            circle.strokeWidth(4);
+            circle.fillColor(Color.argb(80, 52, 173, 125));
+            if(curCircle != null) {
+                curCircle.remove();
+            }
+            curCircle = mMap.addCircle(circle);
+            mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+
+            loadSkenes(location);
         }
+    }
+
+    /**
+     * Draw skene circle
+     * @param latLng
+     */
+    public void drawCircle(LatLng latLng) {
+        int radius = 50;
+        CircleOptions circle = new CircleOptions();
+        circle.center(latLng);
+        circle.radius(radius);
+        circle.strokeColor(Color.argb(150, 204, 33, 33));
+        circle.strokeWidth(10);
+        circle.fillColor(Color.argb(100, 240, 96, 96));
+
+        curCircles.add(mMap.addCircle(circle));
+    }
+
+    /**
+     * Clear all circles on map
+     */
+    public void clearCircles() {
+        for(Circle circle : curCircles) {
+            circle.remove();
+        }
+
+        curCircles.clear();
     }
 
     public void appendSkenes(ArrayList<Skene> skenes) {
@@ -188,6 +268,119 @@ public class MapFragment extends android.support.v4.app.Fragment {
             MarkerOptions marker = new MarkerOptions();
             marker.position(new LatLng(skene.latitude, skene.longitude));
             mMap.addMarker(marker);
+        }
+    }
+
+    public void updatePlaces() {
+        Projection projection = mMap.getProjection();
+        VisibleRegion visibleRegion = projection.getVisibleRegion();
+
+        LatLng northEast = visibleRegion.latLngBounds.northeast;
+        LatLng southWest = visibleRegion.latLngBounds.southwest;
+
+        String count = "25";
+
+        String url = "http://whispr.outi.me/api/get_map_data?count="
+            + count
+            + "&min_lat="
+            + southWest.latitude
+            + "&min_lon="
+            + southWest.longitude
+            + "&max_lat="
+            + northEast.latitude
+            + "&max_long="
+            + northEast.longitude;
+
+        if(mListener.isOnline()) {
+            new GetMapDataTask().execute(url);
+        }
+
+        mTimePast = new Date().getTime();
+    }
+
+    /**
+     * Task to get map data json array
+     */
+    private class GetMapDataTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... urls) {
+
+            // params comes from the execute() call: params[0] is the url.
+            try {
+                return new Loader().downloadUrl(urls[0]);
+            } catch (IOException e) {
+                return "Unable to retrieve web page. URL may be invalid.";
+            }
+        }
+        // onPostExecute displays the results of the AsyncTask.
+        @Override
+        protected void onPostExecute(String result) {
+            try {
+                clearCircles();
+
+                JSONArray jsonArray = new JSONArray(result);
+
+                for(int i = 0; i < jsonArray.length(); i++) {
+                    JSONObject point = jsonArray.getJSONObject(i);
+                    drawCircle(new LatLng(point.getDouble("latitude"), point.getDouble("longitude")));
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Load skenes for the chosen location
+     * @param location
+     */
+    public void loadSkenes(Location location) {
+        String count = "50";
+        String radius = Integer.toString(Skene.radius);
+
+        if(mListener.isOnline()) {
+            String stringUrl = "http://whispr.outi.me/api/get?count="
+                + count
+                + "&lat="
+                + Double.toString(location.getLatitude())
+                + "&long="
+                + Double.toString(location.getLongitude())
+                +"&radius="
+                + radius;
+
+            new LoadSkenesTask().execute(stringUrl);
+        }
+    }
+
+    /**
+     * Task to download json and add to adapter
+     */
+    private class LoadSkenesTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... urls) {
+
+            // params comes from the execute() call: params[0] is the url.
+            try {
+                return new Loader().downloadUrl(urls[0]);
+            } catch (IOException e) {
+                return "Unable to retrieve web page. URL may be invalid.";
+            }
+        }
+        // onPostExecute displays the results of the AsyncTask.
+        @Override
+        protected void onPostExecute(String result) {
+            adapter.clear();
+
+            try {
+                JSONArray jsonArray = new JSONArray(result);
+                adapter.addAll(Skene.fromJSON(jsonArray));
+
+                listView.setSelectionAfterHeaderView();
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
