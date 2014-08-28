@@ -42,8 +42,8 @@ public class Skene implements Serializable {
         this.latitude = latitude;
         this.longitude = longitude;
         this.text = text;
-        //this.pubTime = new Date().getTime(); // Not implemented in API
-        //this.pubTime = 0;
+        this.pubTime = new Date().getTime() / 1000; // Servers saves in seconds
+
         this.pubDelay = delay;
         this.parent_id = 0;
     }
@@ -63,7 +63,7 @@ public class Skene implements Serializable {
     }
 
     public String readableTime() {
-        Date date = new Date(this.pubTime*1000); // pubTime from the server is in seconds
+        Date date = new Date(this.pubTime * 1000); // pubTime from the server is in seconds
         return DateFormat.getDateTimeInstance().format(date);
     }
 
@@ -82,5 +82,4 @@ public class Skene implements Serializable {
 
         return skene;
     }
-
 }

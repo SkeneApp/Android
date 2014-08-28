@@ -229,8 +229,10 @@ public class ServicesActivity extends FragmentActivity implements
 
         mCurrentLocation = mLocationClient.getLastLocation();
 
-        skeneFrag.loadSkenes(mCurrentLocation);
-        mapFrag.setUpMap(mCurrentLocation);
+        if(mCurrentLocation != null && skeneFrag != null && mapFrag != null) {
+            skeneFrag.loadSkenes(mCurrentLocation);
+            mapFrag.setUpMap(mCurrentLocation);
+        }
     }
 
     @Override
@@ -294,16 +296,27 @@ public class ServicesActivity extends FragmentActivity implements
         return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
 
-    public void sendMessage(View view) {
-        skeneFrag.sendMessage(view, mCurrentLocation);
-    }
-
     public Location getLocation() {
         return mCurrentLocation;
     }
 
-    public MapFragment getMapFragment() {
-        return mapFrag;
+    public void writeMessage(View view) {
+        Intent intent = new Intent(this, Conversation.class);
+        intent.putExtra("Answerable", true);
+        intent.putExtra("New", true);
+
+        Location location = mCurrentLocation;
+
+        if(location != null) {
+            intent.putExtra("Latitude", location.getLatitude());
+            intent.putExtra("Longitude", location.getLongitude());
+        }
+
+        startActivity(intent);
+    }
+
+    public void updateFeed(View view) {
+        if(skeneFrag != null && mCurrentLocation != null) skeneFrag.loadSkenes(mCurrentLocation);
     }
 
     /**

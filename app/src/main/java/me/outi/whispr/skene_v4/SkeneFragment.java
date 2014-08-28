@@ -6,6 +6,7 @@ package me.outi.whispr.skene_v4;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -104,7 +105,18 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Skene skene = (Skene) parent.getItemAtPosition(position);
-                Toast.makeText(getActivity(), "Clicked: " + skene.text, Toast.LENGTH_SHORT).show();
+
+                Intent intent = new Intent(getActivity(), Conversation.class);
+                intent.putExtra("Skene", skene);
+                intent.putExtra("Answerable", true);
+                intent.putExtra("New", false);
+
+                Location location = mListener.getLocation();
+                intent.putExtra("Latitude", location.getLatitude());
+                intent.putExtra("Longitude", location.getLongitude());
+
+                startActivity(intent);
+
             }
         });
 
@@ -140,7 +152,7 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
      */
     public interface OnFragmentInteractionListener {
         public Boolean isOnline();
-        public MapFragment getMapFragment();
+        public Location getLocation();
     }
 
     /**
@@ -166,34 +178,6 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
         }
     }
 
-    public void sendMessage(View view, Location location) {
-        Skene skene;
-        JSONObject skeneJSON;
-        Toast.makeText(getActivity(), "Send message: " + message.getText().toString(), Toast.LENGTH_SHORT).show();
-
-        if(location != null) {
-            long delay = 0;
-            skene = new Skene(location.getLatitude(), location.getLongitude(), message.getText().toString(), delay);
-            this.curSkene = skene;
-            skeneJSON = skene.getJSON();
-
-            if(mListener.isOnline()) {
-                new PostJSONTask().execute(skeneJSON);
-            }
-        }
-    }
-
-    public ArrayList<Skene> getSkenes() {
-        ArrayList<Skene> skenes = new ArrayList<Skene>();
-        int i;
-
-        for(i = 0; i < adapter.getCount(); i++) {
-            skenes.add(adapter.getItem(i));
-        }
-
-        return skenes;
-    }
-
     /**
      * Task to download json and put to FeedFragment
      */
@@ -213,6 +197,8 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
         protected void onPostExecute(String result) {
             try {
                 JSONArray jsonArray = new JSONArray(result);
+
+                adapter.clear();
                 adapter.addAll(Skene.fromJSON(jsonArray));
 
                 //mListener.getMapFragment().appendSkenes(getSkenes());
@@ -220,32 +206,6 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    /**
-     * Task to send skene
-     */
-    private class PostJSONTask extends AsyncTask<JSONObject, Void, String> {
-        @Override
-        protected String doInBackground(JSONObject... skene) {
-
-            // params comes from the execute() call: params[0] is the url.
-            return new Loader().postJSON(skene[0]);
-        }
-        // onPostExecute displays the results of the AsyncTask.
-        @Override
-        protected void onPostExecute(String result) {
-            message.setText("");
-            // Update messages
-            try {
-                curSkene.id = Long.parseLong(result.trim(), 10);
-                adapter.insert(curSkene, 0);
-            } catch (Exception e) {
-                Toast.makeText(getActivity(), "Failed to send message", Toast.LENGTH_SHORT).show();
-            }
-
-
         }
     }
 }
