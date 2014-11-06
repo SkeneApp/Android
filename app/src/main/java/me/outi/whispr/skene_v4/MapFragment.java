@@ -1,11 +1,13 @@
 package me.outi.whispr.skene_v4;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Fragment;
 import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -278,21 +280,21 @@ public class MapFragment extends android.support.v4.app.Fragment {
         LatLng northEast = visibleRegion.latLngBounds.northeast;
         LatLng southWest = visibleRegion.latLngBounds.southwest;
 
-        String count = "25";
-
-        String url = "http://whispr.outi.me/api/get_map_data?count="
-            + count
-            + "&min_lat="
-            + southWest.latitude
-            + "&min_lon="
-            + southWest.longitude
-            + "&max_lat="
-            + northEast.latitude
-            + "&max_long="
-            + northEast.longitude;
+        int count = 25;
+        JSONObject params;
 
         if(mListener.isOnline()) {
-            new GetMapDataTask().execute(url);
+            params = new JSONObject();
+            try {
+                params.put("min_lat", southWest.latitude);
+                params.put("min_lon", southWest.longitude);
+                params.put("max_lat", northEast.latitude);
+                params.put("max_lon", northEast.longitude);
+                params.put("count", count);
+                new GetMapDataTask().execute(params);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
 
         mTimePast = new Date().getTime();
@@ -301,16 +303,11 @@ public class MapFragment extends android.support.v4.app.Fragment {
     /**
      * Task to get map data json array
      */
-    private class GetMapDataTask extends AsyncTask<String, Void, String> {
+    private class GetMapDataTask extends AsyncTask<JSONObject, Void, String> {
         @Override
-        protected String doInBackground(String... urls) {
-
+        protected String doInBackground(JSONObject... params) {
             // params comes from the execute() call: params[0] is the url.
-            try {
-                return new Loader().downloadUrl(urls[0]);
-            } catch (IOException e) {
-                return "Unable to retrieve web page. URL may be invalid.";
-            }
+            return new Loader().mapData(params[0]);
         }
         // onPostExecute displays the results of the AsyncTask.
         @Override
@@ -318,7 +315,8 @@ public class MapFragment extends android.support.v4.app.Fragment {
             try {
                 clearCircles();
 
-                JSONArray jsonArray = new JSONArray(result);
+                JSONObject json = new JSONObject(result);
+                JSONArray jsonArray = json.getJSONArray("result");
 
                 for(int i = 0; i < jsonArray.length(); i++) {
                     JSONObject point = jsonArray.getJSONObject(i);
@@ -336,36 +334,32 @@ public class MapFragment extends android.support.v4.app.Fragment {
      * @param location
      */
     public void loadSkenes(Location location) {
-        String count = "50";
+        int count = 50;
         String radius = Integer.toString(Skene.radius);
+        JSONObject params;
 
         if(mListener.isOnline()) {
-            String stringUrl = "http://whispr.outi.me/api/get?count="
-                + count
-                + "&lat="
-                + Double.toString(location.getLatitude())
-                + "&long="
-                + Double.toString(location.getLongitude())
-                +"&radius="
-                + radius;
-
-            new LoadSkenesTask().execute(stringUrl);
+            params = new JSONObject();
+            try {
+                params.put("latitude", location.getLatitude());
+                params.put("longitude", location.getLongitude());
+                params.put("radius", radius);
+                params.put("count", count);
+                new LoadSkenesTask().execute(params);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     /**
      * Task to download json and add to adapter
      */
-    private class LoadSkenesTask extends AsyncTask<String, Void, String> {
+    private class LoadSkenesTask extends AsyncTask<JSONObject, Void, String> {
         @Override
-        protected String doInBackground(String... urls) {
-
+        protected String doInBackground(JSONObject... params) {
             // params comes from the execute() call: params[0] is the url.
-            try {
-                return new Loader().downloadUrl(urls[0]);
-            } catch (IOException e) {
-                return "Unable to retrieve web page. URL may be invalid.";
-            }
+           return new Loader().loadSkenes(params[0]);
         }
         // onPostExecute displays the results of the AsyncTask.
         @Override
@@ -373,7 +367,8 @@ public class MapFragment extends android.support.v4.app.Fragment {
             adapter.clear();
 
             try {
-                JSONArray jsonArray = new JSONArray(result);
+                JSONObject json = new JSONObject(result);
+                JSONArray jsonArray = json.getJSONArray("result");
                 adapter.addAll(Skene.fromJSON(jsonArray));
 
                 listView.setSelectionAfterHeaderView();

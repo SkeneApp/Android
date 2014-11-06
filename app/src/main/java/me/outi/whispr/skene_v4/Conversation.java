@@ -3,17 +3,13 @@ package me.outi.whispr.skene_v4;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -75,7 +71,7 @@ public class Conversation extends Activity {
             skene = new Skene(mLatLng.latitude, mLatLng.longitude, mMessage.getText().toString(), delay);
             mCurSkene = skene;
 
-            if(mParentSkene != null) mCurSkene.parent_id = mParentSkene.id;
+            if(mParentSkene != null) mCurSkene.parentId = mParentSkene.id;
 
             skeneJSON = skene.getJSON();
 
@@ -93,7 +89,7 @@ public class Conversation extends Activity {
         return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
 
-    public void loadChildrenSkenes(Long parent_id) {
+    public void loadChildrenSkenes(String parentId) {
         String count = "50";
         String radius = Integer.toString(Skene.radius);
 
@@ -107,11 +103,12 @@ public class Conversation extends Activity {
                     + "&radius="
                     + radius
                     + "&parent_id="
-                    + parent_id;
+                    + parentId;
 
             new DownloadUrlTask().execute(stringUrl);
         }
     }
+
 
     /**
      * Task to send skene
@@ -119,9 +116,8 @@ public class Conversation extends Activity {
     private class PostJSONTask extends AsyncTask<JSONObject, Void, String> {
         @Override
         protected String doInBackground(JSONObject... skene) {
-
             // params comes from the execute() call: params[0] is the url.
-            return new Loader().postJSON(skene[0]);
+            return new Loader().addSkene(skene[0]);
         }
         // onPostExecute displays the results of the AsyncTask.
         @Override
@@ -129,11 +125,17 @@ public class Conversation extends Activity {
             mMessage.setText("");
             // Update messages
             try {
-                mCurSkene.id = Long.parseLong(result.trim(), 10);
-                adapter.add(mCurSkene);
+                JSONObject json = new JSONObject(result);
+                if(json.has("error")) {
+                    Toast.makeText(Conversation.this, json.getString("error"), Toast.LENGTH_SHORT).show();
+                } else {
+                    mCurSkene.id = json.getString("objectId");
+                    mCurSkene.createdAt = json.getString("createdAt");
+                    adapter.add(mCurSkene);
+                }
 
                 mParentSkene = mCurSkene;
-            } catch (Exception e) {
+            } catch (JSONException e) {
                 Toast.makeText(Conversation.this, "Failed to send message", Toast.LENGTH_SHORT).show();
             }
 
@@ -147,13 +149,15 @@ public class Conversation extends Activity {
     private class DownloadUrlTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... urls) {
-
+            return "";
             // params comes from the execute() call: params[0] is the url.
-            try {
-                return new Loader().downloadUrl(urls[0]);
+            /*try {
+                //return new Loader().downloadUrl(urls[0]);
+
+                return throw new IOException();
             } catch (IOException e) {
                 return "Unable to retrieve web page. URL may be invalid.";
-            }
+            }*/
         }
         // onPostExecute displays the results of the AsyncTask.
         @Override

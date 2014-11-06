@@ -31,7 +31,7 @@ public class SkenesAdapter extends ArrayAdapter<Skene> {
         TextView pubTime = (TextView) convertView.findViewById(R.id.pubTime);
         // Populate the data into the template view using the data object
         text.setText(skene.text);
-        pubTime.setText(skene.readableTime());
+        pubTime.setText(skene.createdAt);
         // Return the completed view to render on screen
         return convertView;
     }

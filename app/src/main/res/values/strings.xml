@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Skene_v4</string>
+    <string name="app_name">Skene</string>
     <string name="title_section1">Feed</string>
     <string name="title_section2">Map</string>
     <string name="title_section3">Section 3</string>
@@ -10,8 +10,10 @@
     <string name="send_btn">Send</string>
     <string name="update_btn">Update</string>
     <string name="write_btn">Write</string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_services_location">ServicesLocation</string>
     <string name="title_activity_conversation">Conversation</string>
+    <string name="no_location_dialog_title">No location found</string>
+    <string name="no_location_dialog_text">If you want to post you need to enable location on your phone</string>
+    <string name="close">Close</string>
 
 </resources>

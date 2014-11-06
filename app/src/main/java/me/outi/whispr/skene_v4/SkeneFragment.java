@@ -52,8 +52,6 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
      * Variables
      */
     private SkenesAdapter adapter;
-    private TextView message;
-    private Skene curSkene;
 
     /**
      * Use this factory method to create a new instance of
@@ -91,7 +89,7 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
         View view = inflater.inflate(R.layout.feed, container, false);
 
         ListView listView = (ListView) view.findViewById(R.id.conversations);
-        message = (TextView) view.findViewById(R.id.message);
+        TextView message = (TextView) view.findViewById(R.id.message);
 
         // Construct the data source
         ArrayList<Skene> arrayOfSkenes = new ArrayList<Skene>();
@@ -161,48 +159,42 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
      */
 
     public void loadSkenes(Location location) {
-        String count = "50";
+        int count = 50;
         String radius = Integer.toString(Skene.radius);
+        JSONObject params;
 
         if(mListener.isOnline()) {
-            String stringUrl = "http://whispr.outi.me/api/get?count="
-                    + count
-                    + "&lat="
-                    + Double.toString(location.getLatitude())
-                    + "&long="
-                    + Double.toString(location.getLongitude())
-                    +"&radius="
-                    + radius;
-
-            new DownloadUrlTask().execute(stringUrl);
+            params = new JSONObject();
+            try {
+                params.put("latitude", location.getLatitude());
+                params.put("longitude", location.getLongitude());
+                params.put("radius", radius);
+                params.put("count", count);
+                new LoadSkenesTask().execute(params);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     /**
      * Task to download json and put to FeedFragment
      */
-    private class DownloadUrlTask extends AsyncTask<String, Void, String> {
+    private class LoadSkenesTask extends AsyncTask<JSONObject, Void, String> {
         @Override
-        protected String doInBackground(String... urls) {
-
+        protected String doInBackground(JSONObject... params) {
             // params comes from the execute() call: params[0] is the url.
-            try {
-                return new Loader().downloadUrl(urls[0]);
-            } catch (IOException e) {
-                return "Unable to retrieve web page. URL may be invalid.";
-            }
+            return new Loader().loadSkenes(params[0]);
         }
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(String result) {
             try {
-                JSONArray jsonArray = new JSONArray(result);
-
+                JSONObject json = new JSONObject(result);
+                JSONArray jsonArray = json.getJSONArray("result");
                 adapter.clear();
                 adapter.addAll(Skene.fromJSON(jsonArray));
-
                 //mListener.getMapFragment().appendSkenes(getSkenes());
-
             } catch (JSONException e) {
                 e.printStackTrace();
             }

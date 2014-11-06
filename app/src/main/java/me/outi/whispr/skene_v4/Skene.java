@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import java.io.Serializable;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -14,25 +15,27 @@ import java.util.Date;
  */
 //@SuppressWarnings("serial") //with this annotation we are going to hide compiler warning
 public class Skene implements Serializable {
-    public long id;
+    public String id;
     public double latitude;
     public double longitude;
     public String text;
     public long pubTime;
     public long pubDelay;
-    public long parent_id;
+    public String parentId;
+    public String createdAt;
 
     public static final int radius = 500;
 
     public Skene(JSONObject object) {
         try {
-            this.id = object.getLong("id");
+            this.id = object.getString("objectId");
             this.latitude = object.getDouble("latitude");
             this.longitude = object.getDouble("longitude");
             this.text = object.getString("text");
             this.pubTime = object.getLong("pubTime");
-            this.parent_id = object.getLong("parent_id");
+            this.parentId = object.getString("parentId");
             this.pubDelay = object.getLong("pubDelay");
+            this.createdAt = object.getString("createdAt");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -45,7 +48,7 @@ public class Skene implements Serializable {
         this.pubTime = new Date().getTime() / 1000; // Servers saves in seconds
 
         this.pubDelay = delay;
-        this.parent_id = 0;
+        this.parentId = "0";
     }
 
     public static ArrayList<Skene> fromJSON(JSONArray jsonObjects) {
@@ -74,7 +77,7 @@ public class Skene implements Serializable {
             skene.put("longitude", this.longitude);
             skene.put("text", this.text);
             skene.put("pubTime", this.pubTime);
-            skene.put("parent_id", this.parent_id);
+            skene.put("parentId", this.parentId);
             skene.put("pubDelay", this.pubDelay);
         } catch(JSONException e) {
             e.printStackTrace();

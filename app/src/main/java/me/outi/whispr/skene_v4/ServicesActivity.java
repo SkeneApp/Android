@@ -2,6 +2,9 @@ package me.outi.whispr.skene_v4;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -105,6 +108,9 @@ public class ServicesActivity extends FragmentActivity implements
         if (savedInstanceState != null) {
             mIsInResolution = savedInstanceState.getBoolean(KEY_IN_RESOLUTION, false);
         }
+
+        // Set up API keys
+        Loader.setupKeys(getString(R.string.parse_app_id), getString(R.string.parse_key));
 
         setContentView(R.layout.activity_main);
 
@@ -310,9 +316,21 @@ public class ServicesActivity extends FragmentActivity implements
         if(location != null) {
             intent.putExtra("Latitude", location.getLatitude());
             intent.putExtra("Longitude", location.getLongitude());
+            startActivity(intent);
+        } else {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.no_location_dialog_text)
+                    .setTitle(R.string.no_location_dialog_title)
+                    .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    });
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
 
-        startActivity(intent);
     }
 
     public void updateFeed(View view) {
@@ -387,4 +405,20 @@ public class ServicesActivity extends FragmentActivity implements
             return null;
         }
     }
+/*
+    public static class NoLocationDialog extends DialogFragment {
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the Builder class for convenient dialog construction
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setMessage(R.string.no_location_dialog)
+                    .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User cancelled the dialog
+                        }
+                    });
+            // Create the AlertDialog object and return it
+            return builder.create();
+        }
+    }*/
 }
