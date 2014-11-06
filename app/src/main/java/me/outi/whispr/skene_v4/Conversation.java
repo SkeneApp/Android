@@ -61,26 +61,6 @@ public class Conversation extends Activity {
         }
     }
 
-    public void sendMessage(View view) {
-        Skene skene;
-        JSONObject skeneJSON;
-        Toast.makeText(this, "Send message: " + mMessage.getText().toString(), Toast.LENGTH_SHORT).show();
-
-        if(mLatLng != null) {
-            long delay = 0;
-            skene = new Skene(mLatLng.latitude, mLatLng.longitude, mMessage.getText().toString(), delay);
-            mCurSkene = skene;
-
-            if(mParentSkene != null) mCurSkene.parentId = mParentSkene.id;
-
-            skeneJSON = skene.getJSON();
-
-            if(isOnline()) {
-                new PostJSONTask().execute(skeneJSON);
-            }
-        }
-    }
-
     public Boolean isOnline() {
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -89,23 +69,36 @@ public class Conversation extends Activity {
         return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
 
-    public void loadChildrenSkenes(String parentId) {
-        String count = "50";
-        String radius = Integer.toString(Skene.radius);
+    public void sendMessage(View view) {
+        Skene skene;
+        JSONObject skeneJSON;
+        Toast.makeText(this, "Sending message...", Toast.LENGTH_SHORT).show();
 
         if(isOnline() && mLatLng != null) {
-            String stringUrl = "http://whispr.outi.me/api/get?count="
-                    + count
-                    + "&lat="
-                    + Double.toString(mLatLng.latitude)
-                    + "&long="
-                    + Double.toString(mLatLng.longitude)
-                    + "&radius="
-                    + radius
-                    + "&parent_id="
-                    + parentId;
+            long delay = 0;
+            skene = new Skene(mLatLng.latitude, mLatLng.longitude, mMessage.getText().toString(), delay);
+            mCurSkene = skene;
 
-            new DownloadUrlTask().execute(stringUrl);
+            if(mParentSkene != null) mCurSkene.parentId = mParentSkene.id;
+
+            skeneJSON = skene.getJSON();
+            new PostJSONTask().execute(skeneJSON);
+        }
+    }
+
+    public void loadChildrenSkenes(String parentId) {
+        int count = 50;
+        JSONObject params;
+
+        if(isOnline() && mLatLng != null) {
+            params = new JSONObject();
+            try {
+                params.put("count", count);
+                params.put("parentId", parentId);
+                new LoadSkenesTask().execute(params);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -127,7 +120,7 @@ public class Conversation extends Activity {
             try {
                 JSONObject json = new JSONObject(result);
                 if(json.has("error")) {
-                    Toast.makeText(Conversation.this, json.getString("error"), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(Conversation.this, "Error occurred", Toast.LENGTH_SHORT).show();
                 } else {
                     mCurSkene.id = json.getString("objectId");
                     mCurSkene.createdAt = json.getString("createdAt");
@@ -146,24 +139,17 @@ public class Conversation extends Activity {
     /**
      * Task to download json and put to FeedFragment
      */
-    private class DownloadUrlTask extends AsyncTask<String, Void, String> {
+    private class LoadSkenesTask extends AsyncTask<JSONObject, Void, String> {
         @Override
-        protected String doInBackground(String... urls) {
-            return "";
-            // params comes from the execute() call: params[0] is the url.
-            /*try {
-                //return new Loader().downloadUrl(urls[0]);
-
-                return throw new IOException();
-            } catch (IOException e) {
-                return "Unable to retrieve web page. URL may be invalid.";
-            }*/
+        protected String doInBackground(JSONObject... params) {
+            return new Loader().loadSkenes(params[0]);
         }
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(String result) {
             try {
-                JSONArray jsonArray = new JSONArray(result);
+                JSONObject json = new JSONObject(result);
+                JSONArray jsonArray = json.getJSONArray("result");
                 adapter.addAll(Skene.fromJSON(jsonArray));
 
                 adapter.sort(new Comparator<Skene>() {

@@ -175,7 +175,7 @@ public class ServicesActivity extends FragmentActivity implements
 
         // Start location client
         mLocationClient.connect();
-        Toast.makeText(this, "Started", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Started", Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -192,7 +192,7 @@ public class ServicesActivity extends FragmentActivity implements
         mLocationClient.disconnect();
 
         super.onStop();
-        Toast.makeText(this, "Stopped", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Stopped", Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -231,7 +231,7 @@ public class ServicesActivity extends FragmentActivity implements
     public void onConnected(Bundle connectionHint) {
         Log.i(TAG, "GoogleApiClient connected");
 
-        Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
 
         mCurrentLocation = mLocationClient.getLastLocation();
 
@@ -243,7 +243,7 @@ public class ServicesActivity extends FragmentActivity implements
 
     @Override
     public void onDisconnected() {
-        Toast.makeText(this, "Disconnected", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, "Disconnected", Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -349,6 +349,7 @@ public class ServicesActivity extends FragmentActivity implements
         mViewPager.setCurrentItem(tab.getPosition());
 
         if(tab.getPosition() == 1) {
+            mapFrag.setUpMap(getLocation());
             mapFrag.updatePlaces();
         }
     }
@@ -405,20 +406,4 @@ public class ServicesActivity extends FragmentActivity implements
             return null;
         }
     }
-/*
-    public static class NoLocationDialog extends DialogFragment {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            // Use the Builder class for convenient dialog construction
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setMessage(R.string.no_location_dialog)
-                    .setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            // User cancelled the dialog
-                        }
-                    });
-            // Create the AlertDialog object and return it
-            return builder.create();
-        }
-    }*/
 }

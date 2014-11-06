@@ -182,7 +182,7 @@ public class MapFragment extends android.support.v4.app.Fragment {
             if (mMap != null) {
                 setUpMap(mListener.getLocation());
 
-                mMap.moveCamera(CameraUpdateFactory.zoomTo(14));
+                mMap.moveCamera(CameraUpdateFactory.zoomTo(13));
 
                 /**
                  * When map is clicked set up new location circle
@@ -218,22 +218,27 @@ public class MapFragment extends android.support.v4.app.Fragment {
 
 
     public void setUpMap(Location location) {
-        if(location != null) {
-            CircleOptions circle = new CircleOptions();
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            circle.center(latLng);
-            circle.radius(Skene.radius);
-            circle.strokeColor(Color.argb(255, 52, 173, 125));
-            circle.strokeWidth(4);
-            circle.fillColor(Color.argb(80, 52, 173, 125));
-            if(curCircle != null) {
-                curCircle.remove();
-            }
-            curCircle = mMap.addCircle(circle);
-            mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
-
-            loadSkenes(location);
+        if(location == null) {
+            // Set to Helsinki
+            location = new Location("Helsinki");
+            location.setLatitude(60.166694);
+            location.setLongitude(24.930559);
         }
+
+        CircleOptions circle = new CircleOptions();
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        circle.center(latLng);
+        circle.radius(Skene.radius);
+        circle.strokeColor(Color.argb(255, 52, 173, 125));
+        circle.strokeWidth(4);
+        circle.fillColor(Color.argb(80, 52, 173, 125));
+        if(curCircle != null) {
+            curCircle.remove();
+        }
+        curCircle = mMap.addCircle(circle);
+        mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        loadSkenes(location);
     }
 
     /**
@@ -335,7 +340,7 @@ public class MapFragment extends android.support.v4.app.Fragment {
      */
     public void loadSkenes(Location location) {
         int count = 50;
-        String radius = Integer.toString(Skene.radius);
+        int radius = Skene.radius;
         JSONObject params;
 
         if(mListener.isOnline()) {
