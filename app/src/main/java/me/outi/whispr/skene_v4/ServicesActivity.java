@@ -74,8 +74,7 @@ public class ServicesActivity extends FragmentActivity implements
      * Google location client
      */
     private LocationClient mLocationClient;
-
-    public Location mCurrentLocation;
+    private Location mCurrentLocation;
 
     /**
      * Fragments

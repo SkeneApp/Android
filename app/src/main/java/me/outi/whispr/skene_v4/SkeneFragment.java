@@ -37,15 +37,6 @@ import java.util.ArrayList;
  *
  */
 public class SkeneFragment extends android.support.v4.app.Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
     private OnFragmentInteractionListener mListener;
 
     /**
@@ -59,12 +50,9 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
      *
      * @return A new instance of fragment SkeneFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static SkeneFragment newInstance() {
         SkeneFragment fragment = new SkeneFragment();
         Bundle args = new Bundle();
-        //args.putString(ARG_PARAM1, number);
-        //args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -75,11 +63,6 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-
     }
 
     @Override
@@ -89,7 +72,6 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
         View view = inflater.inflate(R.layout.feed, container, false);
 
         ListView listView = (ListView) view.findViewById(R.id.conversations);
-        TextView message = (TextView) view.findViewById(R.id.message);
 
         // Construct the data source
         ArrayList<Skene> arrayOfSkenes = new ArrayList<Skene>();
@@ -194,7 +176,6 @@ public class SkeneFragment extends android.support.v4.app.Fragment {
                 JSONArray jsonArray = json.getJSONArray("result");
                 adapter.clear();
                 adapter.addAll(Skene.fromJSON(jsonArray));
-                //mListener.getMapFragment().appendSkenes(getSkenes());
             } catch (JSONException e) {
                 e.printStackTrace();
             }

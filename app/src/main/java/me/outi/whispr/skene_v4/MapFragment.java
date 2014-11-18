@@ -51,15 +51,6 @@ import java.util.Date;
  *
  */
 public class MapFragment extends android.support.v4.app.Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
     private OnFragmentInteractionListener mListener;
 
     /**
@@ -68,7 +59,6 @@ public class MapFragment extends android.support.v4.app.Fragment {
     private GoogleMap mMap;
     private SkenesAdapter adapter;
 
-    private Location selectedLoc;
     private Circle curCircle;
 
     private ArrayList<Circle> curCircles = new ArrayList<Circle>();
@@ -84,12 +74,9 @@ public class MapFragment extends android.support.v4.app.Fragment {
      *
      * @return A new instance of fragment SkeneFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static MapFragment newInstance() {
         MapFragment fragment = new MapFragment();
         Bundle args = new Bundle();
-        //args.putString(ARG_PARAM1, number);
-        //args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -100,11 +87,6 @@ public class MapFragment extends android.support.v4.app.Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-
     }
 
     @Override
@@ -266,16 +248,6 @@ public class MapFragment extends android.support.v4.app.Fragment {
         }
 
         curCircles.clear();
-    }
-
-    public void appendSkenes(ArrayList<Skene> skenes) {
-        adapter.addAll(skenes);
-
-        for(Skene skene : skenes) {
-            MarkerOptions marker = new MarkerOptions();
-            marker.position(new LatLng(skene.latitude, skene.longitude));
-            mMap.addMarker(marker);
-        }
     }
 
     public void updatePlaces() {
